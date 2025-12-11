@@ -21,7 +21,7 @@ const PlantDatabase = () => {
     <div className="plant-database">
       <div className="database-header">
         <h1>Plant Database</h1>
-        <p>Browse and add plants to your collection</p>
+        <p>Browse and add plants to your collection, or add custom plants</p>
       </div>
 
       <div className="database-filters">

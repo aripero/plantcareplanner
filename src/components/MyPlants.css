@@ -136,6 +136,16 @@
   font-size: 0.75rem;
 }
 
+.custom-badge {
+  padding: 0.25rem 0.5rem;
+  background: var(--lighter-green);
+  color: var(--primary-green);
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
 .plant-actions {
   display: flex;
   gap: 0.5rem;

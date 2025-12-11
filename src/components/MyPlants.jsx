@@ -55,20 +55,25 @@ const MyPlants = () => {
       const userId = auth.currentUser?.uid;
       if (!userId) return;
 
+      const isCustom = customSettings.isCustom || false;
+      
       const newPlant = {
         userId,
         plantId: plantData.id,
         name: customSettings.customName || plantData.name,
         plantData: plantData,
+        isCustom: isCustom,
         addedDate: new Date(),
         tags: customSettings.tags || [],
-        customWateringFrequency: customSettings.customWateringFrequency,
-        customFertilizingFrequency: customSettings.customFertilizingFrequency,
-        customPruningFrequency: customSettings.customPruningFrequency,
-        customRepottingFrequency: customSettings.customRepottingFrequency,
-        customMistingFrequency: customSettings.customMistingFrequency,
-        customLightRotationFrequency: customSettings.customLightRotationFrequency,
-        customPestCheckFrequency: customSettings.customPestCheckFrequency,
+        // For custom plants, the frequencies are already in plantData
+        // For database plants, use custom settings if provided
+        customWateringFrequency: isCustom ? null : customSettings.customWateringFrequency,
+        customFertilizingFrequency: isCustom ? null : customSettings.customFertilizingFrequency,
+        customPruningFrequency: isCustom ? null : customSettings.customPruningFrequency,
+        customRepottingFrequency: isCustom ? null : customSettings.customRepottingFrequency,
+        customMistingFrequency: isCustom ? null : customSettings.customMistingFrequency,
+        customLightRotationFrequency: isCustom ? null : customSettings.customLightRotationFrequency,
+        customPestCheckFrequency: isCustom ? null : customSettings.customPestCheckFrequency,
         lastRepottingDate: customSettings.lastRepottingDate,
       };
 
@@ -147,14 +152,40 @@ const MyPlants = () => {
   };
 
   const handleEditPlant = (plant) => {
-    const plantData = PLANT_DATABASE.find(p => p.id === plant.plantId) || plant.plantData;
+    // If it's a custom plant, use the stored plantData
+    // Otherwise, try to find it in the database
+    const plantData = plant.isCustom 
+      ? plant.plantData 
+      : PLANT_DATABASE.find(p => p.id === plant.plantId) || plant.plantData;
     setEditingPlant({ ...plant, plantData });
     setShowAddModal(true);
   };
 
   const handleUpdatePlant = async (plantId, updates) => {
     try {
-      await updateDoc(doc(db, 'userPlants', plantId), updates);
+      // If updating a custom plant, merge plantData
+      if (updates.isCustom && updates.plantData) {
+        await updateDoc(doc(db, 'userPlants', plantId), {
+          name: updates.customName,
+          plantData: updates.plantData,
+          tags: updates.tags,
+          isCustom: true,
+        });
+      } else {
+        // Regular update for database plants
+        await updateDoc(doc(db, 'userPlants', plantId), {
+          name: updates.customName,
+          tags: updates.tags,
+          customWateringFrequency: updates.customWateringFrequency,
+          customFertilizingFrequency: updates.customFertilizingFrequency,
+          customPruningFrequency: updates.customPruningFrequency,
+          customRepottingFrequency: updates.customRepottingFrequency,
+          customMistingFrequency: updates.customMistingFrequency,
+          customLightRotationFrequency: updates.customLightRotationFrequency,
+          customPestCheckFrequency: updates.customPestCheckFrequency,
+        });
+      }
+      
       await loadUserPlants();
       setShowAddModal(false);
       setEditingPlant(null);
@@ -219,14 +250,21 @@ const MyPlants = () => {
 };
 
 const PlantCard = ({ plant, onDelete, onEdit }) => {
-  const plantData = PLANT_DATABASE.find(p => p.id === plant.plantId) || plant.plantData || {};
+  const plantData = plant.isCustom 
+    ? plant.plantData 
+    : PLANT_DATABASE.find(p => p.id === plant.plantId) || plant.plantData || {};
   
   return (
     <div className="user-plant-card">
       <div className="plant-card-content">
         <div>
           <h3>{plant.name}</h3>
-          <p className="plant-type">{plantData.type || 'Unknown'}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <p className="plant-type">{plantData.type || 'Unknown'}</p>
+            {plant.isCustom && (
+              <span className="custom-badge" title="Custom plant">Custom</span>
+            )}
+          </div>
           {plant.tags && plant.tags.length > 0 && (
             <div className="plant-tags">
               {plant.tags.map((tag, idx) => (

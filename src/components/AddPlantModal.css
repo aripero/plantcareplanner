@@ -212,6 +212,36 @@
   cursor: not-allowed;
 }
 
+.custom-plant-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.custom-plant-form .form-section {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.custom-plant-form .form-section:not(:first-child) {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--border);
+}
+
+.custom-plant-form .form-group small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-light);
+  font-size: 0.8rem;
+}
+
+.custom-plant-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
 @media (max-width: 768px) {
   .modal-content {
     max-height: 95vh;
