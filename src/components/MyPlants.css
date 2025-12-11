@@ -1,0 +1,184 @@
+.my-plants {
+  width: 100%;
+}
+
+.my-plants-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.my-plants-header h1 {
+  font-size: 2rem;
+  color: var(--primary-green);
+  margin-bottom: 0.5rem;
+}
+
+.my-plants-header p {
+  color: var(--text-medium);
+}
+
+.add-plant-header-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-green);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.add-plant-header-btn:hover {
+  background: var(--secondary-green);
+  transform: translateY(-1px);
+}
+
+.my-plants-loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-medium);
+}
+
+.empty-collection {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.empty-collection h2 {
+  color: var(--primary-green);
+  margin: 1rem 0 0.5rem;
+}
+
+.empty-collection p {
+  color: var(--text-medium);
+  margin-bottom: 2rem;
+}
+
+.add-first-plant-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-green);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.add-first-plant-btn:hover {
+  background: var(--secondary-green);
+  transform: translateY(-1px);
+}
+
+.plants-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.user-plant-card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-plant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.plant-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.plant-card-content h3 {
+  font-size: 1.25rem;
+  color: var(--primary-green);
+  margin-bottom: 0.5rem;
+}
+
+.plant-type {
+  text-transform: capitalize;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.plant-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  padding: 0.25rem 0.75rem;
+  background: var(--background);
+  color: var(--text-medium);
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+.plant-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-btn,
+.delete-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background: var(--background);
+  color: var(--primary-green);
+}
+
+.edit-btn:hover {
+  background: var(--lighter-green);
+}
+
+.delete-btn {
+  background: #ffebee;
+  color: var(--error);
+}
+
+.delete-btn:hover {
+  background: #ffcdd2;
+}
+
+@media (max-width: 768px) {
+  .my-plants-header {
+    flex-direction: column;
+  }
+  
+  .plants-list {
+    grid-template-columns: 1fr;
+  }
+}
+
