@@ -4019,7 +4019,6 @@ export const PLANT_DATABASE = [
     description: 'Large flower heads. Many colors. Popular in UK gardens.',
   },
   {
-  {
     id: 'rose',
     name: 'Rose',
     type: 'outdoor',
