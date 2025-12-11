@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { PLANT_DATABASE, TASK_TYPES } from '../utils/plantData';
 import { generateTasksForPlant } from '../utils/taskScheduler';
@@ -63,7 +63,7 @@ const MyPlants = () => {
         name: customSettings.customName || plantData.name,
         plantData: plantData,
         isCustom: isCustom,
-        addedDate: new Date(),
+        addedDate: Timestamp.now(),
         tags: customSettings.tags || [],
         // For custom plants, the frequencies are already in plantData
         // For database plants, use custom settings if provided
@@ -115,7 +115,7 @@ const MyPlants = () => {
           lightRotationFrequency: plantData.lightRotationFrequency,
           pestCheckFrequency: plantData.pestCheckFrequency,
         },
-        date: task.date,
+        date: Timestamp.fromDate(task.date),
       }));
 
       // Add tasks to Firestore
