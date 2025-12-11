@@ -30,7 +30,7 @@ function App() {
   }
 
   return (
-    <Router basename="/PlantCarePlanner">
+    <Router basename="/plantcareplanner">
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
         <Route

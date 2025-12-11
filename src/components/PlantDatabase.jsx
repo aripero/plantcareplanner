@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PLANT_DATABASE } from '../utils/plantData';
 import { Search, Plus } from 'lucide-react';
 import './PlantDatabase.css';
@@ -127,15 +128,12 @@ const PlantCard = ({ plant }) => {
 
 const AddToCollectionButton = ({ plant }) => {
   const [adding, setAdding] = useState(false);
+  const navigate = useNavigate();
 
-  const handleAdd = async () => {
-    // This will be implemented in MyPlants component
+  const handleAdd = () => {
     setAdding(true);
     // Navigate to My Plants page with plant pre-selected
-    setTimeout(() => {
-      setAdding(false);
-      window.location.href = '/PlantCarePlanner/my-plants?add=' + plant.id;
-    }, 500);
+    navigate(`/my-plants?add=${plant.id}`);
   };
 
   return (
