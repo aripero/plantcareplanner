@@ -14,7 +14,23 @@ const Login = () => {
     try {
       setLoading(true);
       setError('');
+      
+      // Suppress Cross-Origin-Opener-Policy warnings (browser security warnings, not actual errors)
+      const originalConsoleError = console.error;
+      console.error = (...args) => {
+        const message = args[0]?.toString() || '';
+        if (message.includes('Cross-Origin-Opener-Policy') || 
+            message.includes('window.closed')) {
+          return; // Suppress these specific warnings
+        }
+        originalConsoleError.apply(console, args);
+      };
+      
       await signInWithPopup(auth, googleProvider);
+      
+      // Restore original console.error
+      console.error = originalConsoleError;
+      
       navigate('/');
     } catch (err) {
       setError(err.message || 'Failed to sign in. Please try again.');
