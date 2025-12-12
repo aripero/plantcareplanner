@@ -57,7 +57,18 @@ const MyPlants = () => {
 
       const isCustom = customSettings.isCustom || false;
       
-      const newPlant = {
+      // Helper function to remove undefined values (Firestore doesn't accept undefined)
+      const removeUndefined = (obj) => {
+        const cleaned = {};
+        Object.keys(obj).forEach(key => {
+          if (obj[key] !== undefined) {
+            cleaned[key] = obj[key];
+          }
+        });
+        return cleaned;
+      };
+      
+      const newPlant = removeUndefined({
         userId,
         plantId: plantData.id,
         name: customSettings.customName || plantData.name,
@@ -74,8 +85,15 @@ const MyPlants = () => {
         customMistingFrequency: isCustom ? null : customSettings.customMistingFrequency,
         customLightRotationFrequency: isCustom ? null : customSettings.customLightRotationFrequency,
         customPestCheckFrequency: isCustom ? null : customSettings.customPestCheckFrequency,
-        lastRepottingDate: customSettings.lastRepottingDate,
-      };
+        // Only include lastRepottingDate if it exists (not undefined)
+        ...(customSettings.lastRepottingDate !== undefined ? {
+          lastRepottingDate: customSettings.lastRepottingDate 
+            ? (customSettings.lastRepottingDate instanceof Date 
+                ? Timestamp.fromDate(customSettings.lastRepottingDate)
+                : Timestamp.fromDate(new Date(customSettings.lastRepottingDate)))
+            : null
+        } : {}),
+      });
 
       const docRef = await addDoc(collection(db, 'userPlants'), newPlant);
       
@@ -163,17 +181,28 @@ const MyPlants = () => {
 
   const handleUpdatePlant = async (plantId, updates) => {
     try {
+      // Helper function to remove undefined values (Firestore doesn't accept undefined)
+      const removeUndefined = (obj) => {
+        const cleaned = {};
+        Object.keys(obj).forEach(key => {
+          if (obj[key] !== undefined) {
+            cleaned[key] = obj[key];
+          }
+        });
+        return cleaned;
+      };
+
       // If updating a custom plant, merge plantData
       if (updates.isCustom && updates.plantData) {
-        await updateDoc(doc(db, 'userPlants', plantId), {
+        await updateDoc(doc(db, 'userPlants', plantId), removeUndefined({
           name: updates.customName,
           plantData: updates.plantData,
           tags: updates.tags,
           isCustom: true,
-        });
+        }));
       } else {
         // Regular update for database plants
-        await updateDoc(doc(db, 'userPlants', plantId), {
+        await updateDoc(doc(db, 'userPlants', plantId), removeUndefined({
           name: updates.customName,
           tags: updates.tags,
           customWateringFrequency: updates.customWateringFrequency,
@@ -183,7 +212,7 @@ const MyPlants = () => {
           customMistingFrequency: updates.customMistingFrequency,
           customLightRotationFrequency: updates.customLightRotationFrequency,
           customPestCheckFrequency: updates.customPestCheckFrequency,
-        });
+        }));
       }
       
       await loadUserPlants();
