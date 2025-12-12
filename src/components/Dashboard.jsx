@@ -33,18 +33,19 @@ const Dashboard = () => {
       const totalPlants = plantsSnapshot.size;
 
       // Get tasks
+      // Use simpler query to avoid needing composite index:
+      // Get all user tasks ordered by date, then filter completed in client
       const tasksRef = collection(db, 'tasks');
       const today = startOfDay(new Date());
       
-      const upcomingQuery = query(
+      const tasksQuery = query(
         tasksRef,
         where('userId', '==', userId),
-        where('completed', '==', false),
         orderBy('date', 'asc'),
-        limit(10)
+        limit(50) // Get enough to filter client-side
       );
       
-      const tasksSnapshot = await getDocs(upcomingQuery);
+      const tasksSnapshot = await getDocs(tasksQuery);
       const tasks = [];
       let overdueCount = 0;
       let completedTodayCount = 0;
@@ -53,14 +54,18 @@ const Dashboard = () => {
         const task = { id: doc.id, ...doc.data() };
         const taskDate = task.date.toDate();
         
-        if (isBefore(taskDate, today)) {
-          overdueCount++;
-        } else {
-          tasks.push(task);
-        }
-        
+        // Count completed tasks for today
         if (task.completed && isToday(taskDate)) {
           completedTodayCount++;
+        }
+        
+        // Only process incomplete tasks for upcoming/overdue
+        if (!task.completed) {
+          if (isBefore(taskDate, today)) {
+            overdueCount++;
+          } else {
+            tasks.push(task);
+          }
         }
       });
 
