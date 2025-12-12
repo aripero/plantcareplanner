@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist",
     "build-and-push": "./scripts/build-and-push.sh",
-    "build-and-push:auto": "./scripts/build-and-push.sh 'Auto-commit: Build successful'"
+    "build-and-push:auto": "./scripts/build-and-push.sh 'Auto-commit: Build successful'",
+    "setup-hooks": "./scripts/setup-hooks.sh"
   },
   "dependencies": {
     "react": "^18.2.0",

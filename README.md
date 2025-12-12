@@ -109,6 +109,39 @@ To set up email notifications:
 
 ## Development
 
+### Automated Build and Push Workflow
+
+The project includes git hooks that automatically:
+- **Build** the project before allowing commits (pre-commit hook)
+- **Push** changes automatically after successful commits (post-commit hook)
+
+This ensures that:
+- No broken code is committed (build must pass)
+- Changes are automatically pushed to the remote repository
+
+#### Setup Hooks
+
+Run once to install the git hooks:
+```bash
+npm run setup-hooks
+```
+
+Or manually:
+```bash
+./scripts/setup-hooks.sh
+```
+
+#### Manual Build and Push
+
+If you prefer to manually build and push:
+```bash
+# Build, commit, and push (with custom commit message)
+npm run build-and-push "Your commit message"
+
+# Build, commit, and push (with auto-generated message)
+npm run build-and-push:auto
+```
+
 ### Adding New Plants
 
 Edit `src/utils/plantData.js` to add plants to the database. Each plant should include:
