@@ -2,6 +2,136 @@ import { addDays, isBefore, isAfter, startOfDay, format } from 'date-fns';
 import { TASK_TYPES } from './plantData';
 
 /**
+ * Get the current season based on date
+ * Returns: 'spring', 'summer', 'fall', 'winter'
+ */
+export const getSeason = (date = new Date()) => {
+  const month = date.getMonth() + 1; // 1-12
+  
+  // Northern hemisphere seasons
+  // Spring: March (3) - May (5)
+  // Summer: June (6) - August (8)
+  // Fall: September (9) - November (11)
+  // Winter: December (12) - February (2)
+  
+  if (month >= 3 && month <= 5) return 'spring';
+  if (month >= 6 && month <= 8) return 'summer';
+  if (month >= 9 && month <= 11) return 'fall';
+  return 'winter'; // month === 12 || month <= 2
+};
+
+/**
+ * Adjust watering frequency based on season and plant type
+ * Outdoor and garden plants are more affected by seasons
+ */
+const getSeasonalWateringFrequency = (baseFrequency, plantType, date) => {
+  if (!baseFrequency) return null;
+  
+  const season = getSeason(date);
+  const isOutdoorPlant = plantType === 'outdoor' || plantType === 'garden';
+  
+  // For outdoor/garden plants, apply significant seasonal adjustments
+  if (isOutdoorPlant) {
+    switch (season) {
+      case 'summer':
+        // Summer: More frequent watering (reduce interval by ~30-40%)
+        return Math.max(1, Math.round(baseFrequency * 0.6));
+      case 'winter':
+        // Winter: Less frequent watering (increase interval by ~50-100%)
+        return Math.round(baseFrequency * 1.8);
+      case 'spring':
+        // Spring: Slight increase (reduce interval by ~15%)
+        return Math.max(1, Math.round(baseFrequency * 0.85));
+      case 'fall':
+        // Fall: Slight decrease (increase interval by ~20%)
+        return Math.round(baseFrequency * 1.2);
+      default:
+        return baseFrequency;
+    }
+  }
+  
+  // For houseplants and herbs, apply milder adjustments
+  switch (season) {
+    case 'summer':
+      // Summer: Slight increase
+      return Math.max(1, Math.round(baseFrequency * 0.9));
+    case 'winter':
+      // Winter: Slight decrease
+      return Math.round(baseFrequency * 1.2);
+    case 'spring':
+    case 'fall':
+      // Spring/Fall: Base frequency
+      return baseFrequency;
+    default:
+      return baseFrequency;
+  }
+};
+
+/**
+ * Adjust misting frequency based on season
+ * More misting needed in summer (dry air), less in winter
+ */
+const getSeasonalMistingFrequency = (baseFrequency, date) => {
+  if (!baseFrequency) return null;
+  
+  const season = getSeason(date);
+  
+  switch (season) {
+    case 'summer':
+      // Summer: More frequent misting (reduce interval by ~20%)
+      return Math.max(1, Math.round(baseFrequency * 0.8));
+    case 'winter':
+      // Winter: Less frequent misting (increase interval by ~30%)
+      return Math.round(baseFrequency * 1.3);
+    default:
+      return baseFrequency;
+  }
+};
+
+/**
+ * Adjust pruning frequency based on season
+ * More pruning in spring/fall, less in winter
+ */
+const getSeasonalPruningFrequency = (baseFrequency, date) => {
+  if (!baseFrequency) return null;
+  
+  const season = getSeason(date);
+  
+  switch (season) {
+    case 'winter':
+      // Winter: Less pruning (increase interval by ~50%)
+      return Math.round(baseFrequency * 1.5);
+    case 'spring':
+    case 'fall':
+      // Spring/Fall: More pruning (reduce interval by ~20%)
+      return Math.max(1, Math.round(baseFrequency * 0.8));
+    default:
+      return baseFrequency;
+  }
+};
+
+/**
+ * Adjust pest check frequency based on season
+ * More frequent checks in summer (pest season)
+ */
+const getSeasonalPestCheckFrequency = (baseFrequency, date) => {
+  if (!baseFrequency) return null;
+  
+  const season = getSeason(date);
+  
+  switch (season) {
+    case 'summer':
+      // Summer: More frequent checks (reduce interval by ~30%)
+      return Math.max(1, Math.round(baseFrequency * 0.7));
+    case 'winter':
+      // Winter: Less frequent checks (increase interval by ~30%)
+      return Math.round(baseFrequency * 1.3);
+    default:
+      return baseFrequency;
+  }
+};
+
+/**
  * Generate tasks for a user's plant based on plant data and custom settings
  */
 export const generateTasksForPlant = (plantData, userPlant, startDate = new Date()) => {
@@ -9,28 +139,36 @@ export const generateTasksForPlant = (plantData, userPlant, startDate = new Date
   const today = startOfDay(startDate);
   
   // Use custom settings if available, otherwise use plant defaults
-  const wateringFreq = userPlant.customWateringFrequency || plantData.wateringFrequency;
+  const baseWateringFreq = userPlant.customWateringFrequency || plantData.wateringFrequency;
   const fertilizingFreq = userPlant.customFertilizingFrequency || plantData.fertilizingFrequency;
-  const pruningFreq = userPlant.customPruningFrequency || plantData.pruningFrequency;
+  const basePruningFreq = userPlant.customPruningFrequency || plantData.pruningFrequency;
   const repottingFreq = userPlant.customRepottingFrequency || plantData.repottingFrequency;
-  const mistingFreq = userPlant.customMistingFrequency || plantData.mistingFrequency;
+  const baseMistingFreq = userPlant.customMistingFrequency || plantData.mistingFrequency;
   const lightRotationFreq = userPlant.customLightRotationFrequency || plantData.lightRotationFrequency;
-  const pestCheckFreq = userPlant.customPestCheckFrequency || plantData.pestCheckFrequency;
+  const basePestCheckFreq = userPlant.customPestCheckFrequency || plantData.pestCheckFrequency;
   
   // Generate tasks for the next 90 days
   const daysToGenerate = 90;
+  const plantType = plantData.type || 'houseplant';
   
-  // Watering tasks
-  if (wateringFreq) {
-    for (let day = 0; day < daysToGenerate; day += wateringFreq) {
+  // Watering tasks with seasonal adjustments
+  if (baseWateringFreq) {
+    let currentDay = 0;
+    while (currentDay < daysToGenerate) {
+      const taskDate = addDays(today, currentDay);
+      const adjustedFreq = getSeasonalWateringFrequency(baseWateringFreq, plantType, taskDate);
+      
       tasks.push({
         type: TASK_TYPES.WATERING,
-        date: addDays(today, day),
+        date: taskDate,
         plantId: userPlant.id,
         plantName: userPlant.name || plantData.name,
         completed: false,
         overdue: false,
       });
+      
+      // Move to next task date using adjusted frequency
+      currentDay += adjustedFreq;
     }
   }
   
@@ -51,17 +189,23 @@ export const generateTasksForPlant = (plantData, userPlant, startDate = new Date
     }
   }
   
-  // Pruning tasks
-  if (pruningFreq) {
-    for (let day = 0; day < daysToGenerate; day += pruningFreq) {
+  // Pruning tasks with seasonal adjustments
+  if (basePruningFreq) {
+    let currentDay = 0;
+    while (currentDay < daysToGenerate) {
+      const taskDate = addDays(today, currentDay);
+      const adjustedFreq = getSeasonalPruningFrequency(basePruningFreq, taskDate);
+      
       tasks.push({
         type: TASK_TYPES.PRUNING,
-        date: addDays(today, day),
+        date: taskDate,
         plantId: userPlant.id,
         plantName: userPlant.name || plantData.name,
         completed: false,
         overdue: false,
       });
+      
+      currentDay += adjustedFreq;
     }
   }
   
@@ -86,17 +230,23 @@ export const generateTasksForPlant = (plantData, userPlant, startDate = new Date
     }
   }
   
-  // Misting tasks
-  if (mistingFreq) {
-    for (let day = 0; day < daysToGenerate; day += mistingFreq) {
+  // Misting tasks with seasonal adjustments
+  if (baseMistingFreq) {
+    let currentDay = 0;
+    while (currentDay < daysToGenerate) {
+      const taskDate = addDays(today, currentDay);
+      const adjustedFreq = getSeasonalMistingFrequency(baseMistingFreq, taskDate);
+      
       tasks.push({
         type: TASK_TYPES.MISTING,
-        date: addDays(today, day),
+        date: taskDate,
         plantId: userPlant.id,
         plantName: userPlant.name || plantData.name,
         completed: false,
         overdue: false,
       });
+      
+      currentDay += adjustedFreq;
     }
   }
   
@@ -114,17 +264,23 @@ export const generateTasksForPlant = (plantData, userPlant, startDate = new Date
     }
   }
   
-  // Pest check tasks
-  if (pestCheckFreq) {
-    for (let day = 0; day < daysToGenerate; day += pestCheckFreq) {
+  // Pest check tasks with seasonal adjustments
+  if (basePestCheckFreq) {
+    let currentDay = 0;
+    while (currentDay < daysToGenerate) {
+      const taskDate = addDays(today, currentDay);
+      const adjustedFreq = getSeasonalPestCheckFrequency(basePestCheckFreq, taskDate);
+      
       tasks.push({
         type: TASK_TYPES.PEST_CHECK,
-        date: addDays(today, day),
+        date: taskDate,
         plantId: userPlant.id,
         plantName: userPlant.name || plantData.name,
         completed: false,
         overdue: false,
       });
+      
+      currentDay += adjustedFreq;
     }
   }
   
@@ -159,23 +315,39 @@ const shouldFertilize = (season, date) => {
 
 /**
  * Get next task date after completion
+ * Uses seasonal adjustments for appropriate task types
  */
 export const getNextTaskDate = (taskType, plantData, userPlant, completedDate) => {
   const today = startOfDay(completedDate || new Date());
+  const plantType = plantData.type || 'houseplant';
   
   switch (taskType) {
     case TASK_TYPES.WATERING:
-      return addDays(today, userPlant.customWateringFrequency || plantData.wateringFrequency);
+      const baseWateringFreq = userPlant.customWateringFrequency || plantData.wateringFrequency;
+      const adjustedWateringFreq = getSeasonalWateringFrequency(baseWateringFreq, plantType, today);
+      return addDays(today, adjustedWateringFreq);
+      
     case TASK_TYPES.FERTILIZING:
       return addDays(today, userPlant.customFertilizingFrequency || plantData.fertilizingFrequency);
+      
     case TASK_TYPES.PRUNING:
-      return addDays(today, userPlant.customPruningFrequency || plantData.pruningFrequency);
+      const basePruningFreq = userPlant.customPruningFrequency || plantData.pruningFrequency;
+      const adjustedPruningFreq = getSeasonalPruningFrequency(basePruningFreq, today);
+      return addDays(today, adjustedPruningFreq);
+      
     case TASK_TYPES.MISTING:
-      return addDays(today, userPlant.customMistingFrequency || plantData.mistingFrequency);
+      const baseMistingFreq = userPlant.customMistingFrequency || plantData.mistingFrequency;
+      const adjustedMistingFreq = getSeasonalMistingFrequency(baseMistingFreq, today);
+      return addDays(today, adjustedMistingFreq);
+      
     case TASK_TYPES.LIGHT_ROTATION:
       return addDays(today, userPlant.customLightRotationFrequency || plantData.lightRotationFrequency);
+      
     case TASK_TYPES.PEST_CHECK:
-      return addDays(today, userPlant.customPestCheckFrequency || plantData.pestCheckFrequency);
+      const basePestCheckFreq = userPlant.customPestCheckFrequency || plantData.pestCheckFrequency;
+      const adjustedPestCheckFreq = getSeasonalPestCheckFrequency(basePestCheckFreq, today);
+      return addDays(today, adjustedPestCheckFreq);
+      
     default:
       return addDays(today, 7);
   }
